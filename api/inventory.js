@@ -1,0 +1,128 @@
+
+
+
+
+// const express = require("express");
+// const Product = require("../models/Product");
+// const router = express.Router();
+
+// // Get all products
+// router.get("/", async (req, res) => {
+//   try {
+//     const products = await Product.find();
+//     res.json(products);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // Add a product
+// router.post("/", async (req, res) => {
+//   const { name, category, quantity, price } = req.body;
+//   const newProduct = new Product({ name, category, quantity, price });
+  
+//   try {
+//     const savedProduct = await newProduct.save();
+//     res.json(savedProduct);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // Update product quantity and price
+// router.put("/:id", async (req, res) => {
+//   try {
+//     const updatedProduct = await Product.findByIdAndUpdate(
+//       req.params.id,
+//       { $set: req.body },
+//       { new: true }
+//     );
+//     res.json(updatedProduct);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // Delete a product
+// router.delete("/:id", async (req, res) => {
+//   try {
+//     await Product.findByIdAndDelete(req.params.id);
+//     res.json({ message: "Product deleted" });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// module.exports = router;
+
+
+const express = require("express");
+const mongoose = require("mongoose");
+const serverless = require("serverless-http"); // Import serverless-http for serverless deployment
+const Product = require("../models/Product");
+
+const app = express();
+app.use(express.json());
+
+// MongoDB connection function
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
+  await mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+};
+
+// Get all products
+app.get("/api/inventory", async (req, res) => {
+  try {
+    await connectDB(); // Connect to the database
+    const products = await Product.find();
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add a product
+app.post("/api/inventory", async (req, res) => {
+  const { name, category, quantity, price } = req.body;
+  const newProduct = new Product({ name, category, quantity, price });
+
+  try {
+    await connectDB(); // Connect to the database
+    const savedProduct = await newProduct.save();
+    res.json(savedProduct);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update product quantity and price
+app.put("/api/inventory/:id", async (req, res) => {
+  try {
+    await connectDB(); // Connect to the database
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(updatedProduct);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a product
+app.delete("/api/inventory/:id", async (req, res) => {
+  try {
+    await connectDB(); // Connect to the database
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: "Product deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = app;
+module.exports.handler = serverless(app); // Wrap the express app in serverless function handler

@@ -48,8 +48,8 @@ mongoose
   .catch((err) => console.log(err));
 
 // Routes
-const inventoryRoutes = require('./routes/inventory');
-const rentalRoutes = require('./routes/rental');
+const inventoryRoutes = require('./api/inventory');
+const rentalRoutes = require('./api/rental');
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/rental", rentalRoutes);
 
