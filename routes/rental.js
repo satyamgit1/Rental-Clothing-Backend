@@ -1,5 +1,6 @@
 
 
+
 // const express = require("express");
 // const Rental = require("../models/Rental");
 // const Product = require("../models/Product");
@@ -94,14 +95,29 @@
 // module.exports = router;
 
 
+
 const express = require("express");
+const mongoose = require("mongoose");
 const Rental = require("../models/Rental");
 const Product = require("../models/Product");
-const router = express.Router();
+
+// Create the express app
+const app = express();
+app.use(express.json());
+
+// MongoDB connection function
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
+  await mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+};
 
 // Get rented clothes
-router.get('/rented', async (req, res) => {
+app.get('/api/rental/rented', async (req, res) => {
   try {
+    await connectDB(); // Connect to the database
     const rentals = await Rental.find(); // Fetch all rentals
     if (rentals.length === 0) {
       return res.json({ message: 'No rented products found.' });
@@ -113,7 +129,7 @@ router.get('/rented', async (req, res) => {
 });
 
 // Handle checkout
-router.post("/checkout", async (req, res) => {
+app.post("/api/rental/checkout", async (req, res) => {
   const { name, rentalDate, returnDate, products } = req.body;
   
   const totalPrice = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
@@ -128,6 +144,8 @@ router.post("/checkout", async (req, res) => {
   });
 
   try {
+    await connectDB(); // Connect to the database
+    
     // Save the rental first
     const savedRental = await newRental.save();
 
@@ -153,8 +171,10 @@ router.post("/checkout", async (req, res) => {
 });
 
 // Mark rental as returned
-router.post("/return/:id", async (req, res) => {
+app.post("/api/rental/return/:id", async (req, res) => {
   try {
+    await connectDB(); // Connect to the database
+    
     const rental = await Rental.findById(req.params.id);
     if (!rental) {
       return res.status(404).json({ message: "Rental not found" });
@@ -185,4 +205,4 @@ router.post("/return/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = app;
