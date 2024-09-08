@@ -1,71 +1,4 @@
-// const express = require("express");
-// const Rental = require("../models/Rental");
-// const Product = require("../models/Product");
-// const router = express.Router();
 
-// router.get('/rented', async (req, res) => {
-//   try {
-//     const rentals = await Rental.find();
-//     console.log('Rented Products:', rentals);  // Add this line to log the rentals
-//     if (rentals.length === 0) {
-//       return res.json({ message: 'No rented products found.' });
-//     }
-//     res.json(rentals);
-//   } catch (err) {
-//     console.error('Error fetching rented products:', err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-
-// // Handle checkout
-// router.post("/checkout", async (req, res) => {
-//   const { name, rentalDate, returnDate, products } = req.body;
-  
-//   if (!name || !rentalDate || !returnDate || !products || products.length === 0) {
-//     return res.status(400).json({ message: "Invalid data. Please provide all necessary fields." });
-//   }
-
-//   const totalPrice = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
-  
-//   const newRental = new Rental({
-//     name,
-//     rentalDate,
-//     returnDate,
-//     products,
-//     totalPrice,
-//   });
-
-//   try {
-//     // Save the rental first
-//     const savedRental = await newRental.save();
-
-//     // Update product quantities in the inventory
-//     for (const product of products) {
-//       const existingProduct = await Product.findById(product.productId); // Assuming the frontend sends productId
-//       if (existingProduct) {
-//         if (existingProduct.quantity < product.quantity) {
-//           return res.status(400).json({ message: `Not enough stock for ${existingProduct.name}. Available quantity is ${existingProduct.quantity}.` });
-//         }
-
-//         existingProduct.quantity -= product.quantity;
-//         await existingProduct.save(); // Save the updated quantity
-//       } else {
-//         return res.status(404).json({ message: `Product with ID ${product.productId} not found.` });
-//       }
-//     }
-
-//     res.json(savedRental);
-//   } catch (err) {
-//     console.error("Error during checkout:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-// module.exports = router;
-
-
-// routes/rental.js
 
 // const express = require("express");
 // const Rental = require("../models/Rental");
@@ -159,8 +92,6 @@
 // });
 
 // module.exports = router;
-
-
 
 
 const express = require("express");
