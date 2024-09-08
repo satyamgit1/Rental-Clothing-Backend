@@ -1,19 +1,21 @@
+// models/Rental.js
+
 const mongoose = require("mongoose");
 
-const rentalSchema = new mongoose.Schema({
-  name: String,
-  rentalDate: Date,
-  returnDate: Date,
+const RentalSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  rentalDate: { type: Date, required: true },
+  returnDate: { type: Date, required: true },
   products: [
     {
-      productId: mongoose.Schema.Types.ObjectId,
-      name: String,
-      category: String,
-      quantity: Number,
-      price: Number,
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+      name: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
     },
   ],
-  totalPrice: Number,
+  totalPrice: { type: Number, required: true },
+  returned: { type: Boolean, default: false }, // New field to track if rental is returned
 });
 
-module.exports = mongoose.model("Rental", rentalSchema);
+module.exports = mongoose.model("Rental", RentalSchema);
