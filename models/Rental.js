@@ -1,5 +1,4 @@
 // models/Rental.js
-
 const mongoose = require("mongoose");
 
 const RentalSchema = new mongoose.Schema({
@@ -15,7 +14,7 @@ const RentalSchema = new mongoose.Schema({
     },
   ],
   totalPrice: { type: Number, required: true },
-  returned: { type: Boolean, default: false }, // New field to track if rental is returned
-});
+  returned: { type: Boolean, default: false },
+}, { timestamps: true });
 
 module.exports = mongoose.model("Rental", RentalSchema);

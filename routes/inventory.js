@@ -1,7 +1,3 @@
-
-
-
-
 // const express = require("express");
 // const Product = require("../models/Product");
 // const router = express.Router();
@@ -20,7 +16,7 @@
 // router.post("/", async (req, res) => {
 //   const { name, category, quantity, price } = req.body;
 //   const newProduct = new Product({ name, category, quantity, price });
-  
+
 //   try {
 //     const savedProduct = await newProduct.save();
 //     res.json(savedProduct);
@@ -28,55 +24,44 @@
 //     res.status(500).json({ error: err.message });
 //   }
 // });
-
 // // Update product quantity and price
 // router.put("/:id", async (req, res) => {
 //   try {
 //     const updatedProduct = await Product.findByIdAndUpdate(
 //       req.params.id,
 //       { $set: req.body },
-//       { new: true }
+//       { new: true, runValidators: true } // Run validators to ensure data integrity
 //     );
+//     if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 //     res.json(updatedProduct);
 //   } catch (err) {
-//     res.status(500).json({ error: err.message });
+//     handleError(res, err, "Error updating product");
 //   }
 // });
 
 // // Delete a product
 // router.delete("/:id", async (req, res) => {
 //   try {
-//     await Product.findByIdAndDelete(req.params.id);
+//     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+//     if (!deletedProduct) return res.status(404).json({ message: "Product not found" });
 //     res.json({ message: "Product deleted" });
 //   } catch (err) {
-//     res.status(500).json({ error: err.message });
+//     handleError(res, err, "Error deleting product");
 //   }
 // });
 
 // module.exports = router;
 
 
-const express = require("express");
-const mongoose = require("mongoose");
-const serverless = require("serverless-http"); // Import serverless-http for serverless deployment
-const Product = require("../models/Product");
-
-const app = express();
-app.use(express.json());
-
-// MongoDB connection function
-const connectDB = async () => {
-  if (mongoose.connections[0].readyState) return;
-  await mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-};
+// routes/inventory.js
+const express = require('express');
+const Product = require('../models/Product');
+const { sendLowInventoryEmail } = require('../utils/mailer'); // Import the mailer function
+const router = express.Router();
 
 // Get all products
-app.get("/api/inventory", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    await connectDB(); // Connect to the database
     const products = await Product.find();
     res.json(products);
   } catch (err) {
@@ -85,13 +70,18 @@ app.get("/api/inventory", async (req, res) => {
 });
 
 // Add a product
-app.post("/api/inventory", async (req, res) => {
+router.post('/', async (req, res) => {
   const { name, category, quantity, price } = req.body;
   const newProduct = new Product({ name, category, quantity, price });
 
   try {
-    await connectDB(); // Connect to the database
     const savedProduct = await newProduct.save();
+    
+    // Check if the quantity is less than 3 and send an email
+    if (savedProduct.quantity < 3) {
+      await sendLowInventoryEmail(savedProduct);
+    }
+
     res.json(savedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -99,14 +89,21 @@ app.post("/api/inventory", async (req, res) => {
 });
 
 // Update product quantity and price
-app.put("/api/inventory/:id", async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    await connectDB(); // Connect to the database
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      { new: true }
+      { new: true, runValidators: true } // Run validators to ensure data integrity
     );
+
+    if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
+
+    // Check if the quantity is less than 3
+    if (updatedProduct.quantity < 3) {
+      await sendLowInventoryEmail(updatedProduct); // Send the low inventory alert email
+    }
+
     res.json(updatedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -114,15 +111,14 @@ app.put("/api/inventory/:id", async (req, res) => {
 });
 
 // Delete a product
-app.delete("/api/inventory/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    await connectDB(); // Connect to the database
-    await Product.findByIdAndDelete(req.params.id);
-    res.json({ message: "Product deleted" });
+    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+    if (!deletedProduct) return res.status(404).json({ message: 'Product not found' });
+    res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-module.exports = app;
-module.exports.handler = serverless(app); // Wrap the express app in serverless function handler
+module.exports = router;
